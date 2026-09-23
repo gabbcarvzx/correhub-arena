@@ -2,7 +2,7 @@ export default function Home() {
   return (
     <main>
       <h1>CorreHub</h1>
-      <p>Em desenvolvimento</p>
+      <p role="status">Em desenvolvimento</p>
     </main>
   );
 }
