@@ -9,7 +9,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "db:start": "supabase start --exclude studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,storage-api,supavisor",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset --local",
+    "db:test": "supabase test db --local supabase/tests/database",
+    "db:lint": "supabase db lint --local --schema public,private --level warning --fail-on error",
+    "db:types": "supabase gen types --local --lang typescript --schema public > src/types/database.ts"
   },
   "dependencies": {
     "next": "16.3.5",
