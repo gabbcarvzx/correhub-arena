@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+:root {
+  --ch-primary: #B7F34A;
+  --ch-primary-hover: #8ED120;
+  --ch-foreground: #151515;
+  --ch-on-primary: #151515;
+  --ch-background: #F8F9F7;
+  --ch-surface: #FFFFFF;
+  --ch-muted: #70756D;
+  --ch-border: #E4E7E1;
+  --ch-destructive: #B42318;
+  --ch-success: #167A3E;
+  --ch-warning: #8A5900;
+  --ch-focus: #5B5BD6;
+  --ch-disabled: #6D7569;
+}
+
+@theme inline {
+  --color-primary: var(--ch-primary);
+  --color-primary-hover: var(--ch-primary-hover);
+  --color-foreground: var(--ch-foreground);
+  --color-on-primary: var(--ch-on-primary);
+  --color-background: var(--ch-background);
+  --color-surface: var(--ch-surface);
+  --color-muted: var(--ch-muted);
+  --color-border: var(--ch-border);
+  --color-destructive: var(--ch-destructive);
+  --color-success: var(--ch-success);
+  --color-warning: var(--ch-warning);
+  --color-focus: var(--ch-focus);
+  --color-disabled: var(--ch-disabled);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ch-background);
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+  margin: 0;
+  background: var(--ch-background);
+  color: var(--ch-foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ch-focus);
+  outline-offset: 4px;
+}
+
+.foundation-shell {
+  display: grid;
+  min-height: 100svh;
+  width: 100%;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.foundation-card {
+  width: min(42rem, calc(100vw - 3rem));
+  max-width: 42rem;
+  min-width: 0;
+  padding: clamp(2rem, 8vw, 5rem);
+  border: 1px solid var(--ch-border);
+  border-radius: 1.5rem;
+  background: var(--ch-surface);
+  box-shadow: 0 1rem 3rem rgb(21 21 21 / 8%);
+}
+
+.foundation-kicker {
+  display: inline-flex;
+  margin: 0 0 1.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: var(--ch-primary);
+  color: var(--ch-on-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.foundation-title {
+  margin: 0;
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.foundation-status {
+  margin: 1.5rem 0 0;
+  color: var(--ch-muted);
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  font-weight: 600;
+}
+
+.foundation-note {
+  max-width: 32rem;
+  margin: 1rem 0 0;
+  color: var(--ch-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+@media (min-width: 48rem) {
+  .foundation-shell {
+    padding: 3rem;
+  }
+}
