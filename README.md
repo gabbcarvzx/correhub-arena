@@ -55,14 +55,15 @@ Os tokens vivem exclusivamente em `src/app/globals.css`. Pares usados na landing
 
 `main` recebe baselines integrados. O trabalho do Gate usa `feature/gate-0-foundation`; correções usam `fix/...`. Commits seguem Conventional Commits e permanecem pequenos. Pull requests executam os mesmos checks locais via GitHub Actions, sem secrets.
 
-## Preview Vercel
+## Deploy Vercel
 
 - Projeto: `correhub`, no plano Hobby.
-- Branch: `feature/gate-0-foundation`.
-- Preview validado em 23/09/2026: <https://correhub-tqq5wh5tu-gabbcarvzxs-projects.vercel.app>.
+- Repositório conectado: `gabbcarvzx/correhub02` (privado).
+- Preview da branch `feature/gate-0-foundation`, validado em 23/09/2026: <https://correhub-tqq5wh5tu-gabbcarvzxs-projects.vercel.app>.
+- URL estável de `main`, validada em 23/09/2026: <https://correhub.vercel.app>.
 - Finalidade: desenvolvimento e validação pessoal não comercial, com custo obrigatório de R$ 0.
 
-O deployment ficou `Ready`, retornou HTTP 200 e serviu o título `CorreHub` e o status `Em desenvolvimento`. Como o preview usa Deployment Protection, a verificação do conteúdo foi feita pela sessão autenticada da Vercel CLI.
+Os deployments ficaram `Ready`, retornaram HTTP 200 e serviram o título `CorreHub` e o status `Em desenvolvimento`, sem erro de runtime. Como o preview usa Deployment Protection, a verificação do conteúdo da branch foi feita pela sessão autenticada da Vercel CLI.
 
 ## Variáveis e segurança
 
