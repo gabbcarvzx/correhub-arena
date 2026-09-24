@@ -14,7 +14,9 @@ Fundação do CorreHub: uma landing mínima em Next.js, preparada para evoluçã
 | TypeScript | 5.9.3 |
 | ESLint / eslint-config-next | 9.39.5 / 16.3.5 |
 | Vitest | 5.0.1 |
+| Vite React plugin | 6.1.1 |
 | Testing Library React | 16.3.3 |
+| Testing Library Jest DOM | 7.0.1 |
 | jsdom | 30.1.0 |
 | Supabase CLI (devDependency) | 2.117.0 |
 
@@ -33,6 +35,8 @@ npm run build
 ```
 
 `npm run lint`, `npm run typecheck`, `npm run test` e `npm run build` não dependem de `.env.local` no Gate 0.
+
+O Next.js 16.3.5 gera `next-env.d.ts` por `next typegen`, por isso o arquivo permanece ignorado conforme a documentação da versão. `agentRules: false` evita que `npm run dev` gere arquivos auxiliares de agentes na raiz do projeto.
 
 ## Estrutura
 
