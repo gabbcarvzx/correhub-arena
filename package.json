@@ -15,14 +15,23 @@
     "db:reset": "supabase db reset --local",
     "db:test": "supabase test db --local supabase/tests/database",
     "db:lint": "supabase db lint --local --schema public,private --level warning --fail-on error",
-    "db:types": "node scripts/generate-database-types.mjs --local"
+    "db:types": "node scripts/generate-database-types.mjs --local",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "test:auth": "node scripts/run-auth-e2e.mjs"
   },
   "dependencies": {
+    "@hookform/resolvers": "5.9.1",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.2",
     "next": "16.3.5",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.88.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
