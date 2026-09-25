@@ -104,11 +104,11 @@ A Supabase CLI permanece fixada como dependência local. O Gate 1 não configura
 ### Banco remoto validado
 
 - Organização: `correhub`, plano Free.
-- Projeto: `correhub` (`cnhwaiszbkosgqxwcgco`), região `us-west-2`, estado `ACTIVE_HEALTHY` em 24/09/2026.
-- As seis migrations e o seed versionado foram aplicados; o histórico remoto corresponde ao local.
+- Projeto: `correhub` (`svvthxrixrnrrgosydtg`), região `sa-east-1` (São Paulo), estado `ACTIVE_HEALTHY` em 24/09/2026.
+- As sete migrations e o seed versionado foram aplicados; o histórico remoto corresponde ao local.
 - O lint remoto não encontrou erros, a Data API permite somente as leituras previstas e nega escrita anônima, domínio futuro e acesso direto ao schema `private`.
 - O contrato TypeScript normalizado de `public` é byte a byte idêntico entre local e remoto.
-- Nenhum add-on foi selecionado e nenhuma credencial Supabase foi adicionada ao frontend ou à Vercel.
+- Nenhum add-on foi selecionado, as chaves JWT legadas estão desativadas e nenhuma credencial Supabase foi adicionada ao frontend ou à Vercel.
 
 ## Fontes
 
