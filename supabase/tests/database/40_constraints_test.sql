@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(34);
 
 insert into auth.users (id,email)
 select format('30000000-0000-4000-8000-%s',lpad(i::text,12,'0'))::uuid, format('domain-%s@example.test',i)
@@ -30,6 +30,34 @@ select throws_ok(
   $$insert into public.group_members (group_id,user_id,role,status,joined_at)
     values ('40000000-0000-4000-8000-000000000002','30000000-0000-4000-8000-000000000004','owner','active',now())$$,
   '23505',null,'second active owner is rejected'
+);
+
+create or replace function pg_temp.insert_owner_with_wrong_status() returns void language plpgsql as $$
+begin
+  set constraints all deferred;
+  insert into public.group_members (group_id,user_id,role,status)
+  values ('40000000-0000-4000-8000-000000000002','30000000-0000-4000-8000-000000000004','owner','pending');
+  set constraints all immediate;
+end;
+$$;
+select throws_ok(
+  'select pg_temp.insert_owner_with_wrong_status()',
+  '23514',null,'approved group rejects an additional pending owner'
+);
+
+create or replace function pg_temp.move_owner_out_of_group() returns void language plpgsql as $$
+begin
+  set constraints all deferred;
+  update public.group_members
+  set group_id = '40000000-0000-4000-8000-000000000002', role = 'member'
+  where group_id = '40000000-0000-4000-8000-000000000001'
+    and user_id = '30000000-0000-4000-8000-000000000001';
+  set constraints all immediate;
+end;
+$$;
+select throws_ok(
+  'select pg_temp.move_owner_out_of_group()',
+  '23514',null,'moving owner membership validates the former group'
 );
 
 create or replace function pg_temp.insert_divergent_owner() returns void language plpgsql as $$

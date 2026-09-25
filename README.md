@@ -52,7 +52,7 @@ npm run db:types
 npm run db:stop
 ```
 
-`db:reset` recria o banco local a partir das migrations e aplica o seed. `db:test` executa a suíte pgTAP, `db:lint` inspeciona os schemas `public` e `private`, e `db:types` regenera `src/types/database.ts` somente a partir de `public`. A saída completa de `supabase status` contém credenciais locais de desenvolvimento e não deve ser copiada para issues ou logs públicos.
+`db:reset` recria o banco local a partir das migrations e aplica o seed. `db:test` executa a suíte pgTAP, `db:lint` inspeciona os schemas `public` e `private`, e `db:types` regenera `src/types/database.ts` somente a partir de `public`. O gerador normaliza apenas metadados da versão hospedada do PostgREST e finais de linha, permitindo uma comparação byte a byte do contrato local e remoto. A saída completa de `supabase status` contém credenciais locais de desenvolvimento e não deve ser copiada para issues ou logs públicos.
 
 As migrations versionadas são a única fonte de verdade do schema. `supabase/seed.sql` contém apenas São Lourenço da Mata e o singleton `launch_city_id`; fixtures dos testes vivem dentro de transações com rollback. Comandos `--local` operam somente na stack Docker. Comandos `--linked` são reservados à validação deliberada do projeto remoto e nunca fazem parte dos testes locais ou da CI.
 
@@ -107,7 +107,7 @@ A Supabase CLI permanece fixada como dependência local. O Gate 1 não configura
 - Projeto: `correhub` (`cnhwaiszbkosgqxwcgco`), região `us-west-2`, estado `ACTIVE_HEALTHY` em 24/09/2026.
 - As seis migrations e o seed versionado foram aplicados; o histórico remoto corresponde ao local.
 - O lint remoto não encontrou erros, a Data API permite somente as leituras previstas e nega escrita anônima, domínio futuro e acesso direto ao schema `private`.
-- O contrato TypeScript de `public` é equivalente entre local e remoto. O gerador hospedado inclui apenas o metadado adicional da versão do PostgREST, que não representa drift de schema.
+- O contrato TypeScript normalizado de `public` é byte a byte idêntico entre local e remoto.
 - Nenhum add-on foi selecionado e nenhuma credencial Supabase foi adicionada ao frontend ou à Vercel.
 
 ## Fontes
