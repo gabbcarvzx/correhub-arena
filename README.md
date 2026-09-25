@@ -99,7 +99,16 @@ O schema `private` não faz parte da configuração da Data API e não concede a
 
 O custo obrigatório desta fase é R$ 0. A validação usa ferramentas gratuitas dentro das cotas aplicáveis e não compra domínio, add-on, upgrade ou créditos. O Vercel Hobby só é elegível para desenvolvimento e validação pessoal não comercial; essa condição deve ser reconfirmada antes de qualquer uso comercial.
 
-A Supabase CLI permanece fixada como dependência local. O Gate 1 não configura Google OAuth, callback, sessão SSR, Storage ou credenciais Supabase na Vercel. O único projeto remoto Free é criado e validado depois que migrations, seed, pgTAP, lint e CI locais estiverem verdes.
+A Supabase CLI permanece fixada como dependência local. O Gate 1 não configura Google OAuth, callback, sessão SSR, Storage ou credenciais Supabase na Vercel.
+
+### Banco remoto validado
+
+- Organização: `correhub`, plano Free.
+- Projeto: `correhub` (`cnhwaiszbkosgqxwcgco`), região `us-west-2`, estado `ACTIVE_HEALTHY` em 24/09/2026.
+- As seis migrations e o seed versionado foram aplicados; o histórico remoto corresponde ao local.
+- O lint remoto não encontrou erros, a Data API permite somente as leituras previstas e nega escrita anônima, domínio futuro e acesso direto ao schema `private`.
+- O contrato TypeScript de `public` é equivalente entre local e remoto. O gerador hospedado inclui apenas o metadado adicional da versão do PostgREST, que não representa drift de schema.
+- Nenhum add-on foi selecionado e nenhuma credencial Supabase foi adicionada ao frontend ou à Vercel.
 
 ## Fontes
 
