@@ -4,6 +4,8 @@ out/
 coverage/
 .vercel/
 .local/
+supabase/.temp/
+supabase/.branches/
 *.tsbuildinfo
 next-env.d.ts
 .env*

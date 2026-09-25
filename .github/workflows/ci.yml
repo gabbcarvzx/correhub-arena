@@ -23,3 +23,25 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run build
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: docker info
+      - run: npm run db:start
+      - run: npm run db:reset
+      - run: npm run db:test
+      - run: npm run db:lint
+      - run: npm run db:types
+      - run: git diff --exit-code -- src/types/database.ts
+      - if: always()
+        run: npm run db:stop
