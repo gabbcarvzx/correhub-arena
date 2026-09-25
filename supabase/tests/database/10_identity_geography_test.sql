@@ -66,14 +66,17 @@ from generate_series(1, 8) as fixture(i);
 
 select is(
   (select count(*) from public.profiles where id::text like '20000000-0000-4000-8000-%'),
-  0::bigint,
-  'auth.users insert does not provision profiles in Gate 1'
+  8::bigint,
+  'auth.users insert provisions profiles in Gate 2'
 );
 select is(
   (select count(*) from private.account_controls where user_id::text like '20000000-0000-4000-8000-%'),
-  0::bigint,
-  'auth.users insert does not provision account controls in Gate 1'
+  8::bigint,
+  'auth.users insert provisions account controls in Gate 2'
 );
+
+delete from public.profiles where id::text like '20000000-0000-4000-8000-%';
+delete from private.account_controls where user_id::text like '20000000-0000-4000-8000-%';
 
 select lives_ok(
   $$insert into public.profiles

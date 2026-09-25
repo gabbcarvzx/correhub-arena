@@ -732,7 +732,20 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      ensure_current_account_foundation: {
+        Args: never
+        Returns: {
+          account_status: string
+          onboarding_completed: boolean
+        }[]
+      }
+      get_current_account_state: {
+        Args: never
+        Returns: {
+          account_status: string
+          onboarding_completed: boolean
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
