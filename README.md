@@ -105,10 +105,11 @@ Os tokens vivem exclusivamente em `src/app/globals.css`. Pares usados na landing
 - Projeto: `correhub`, no plano Hobby.
 - Repositório conectado: `gabbcarvzx/correhub02` (privado).
 - Preview da branch `feature/gate-0-foundation`, validado em 23/09/2026: <https://correhub-tqq5wh5tu-gabbcarvzxs-projects.vercel.app>.
+- Preview protegido da branch `feature/gate-2-auth-onboarding`, validado em 26/09/2026: <https://correhub-git-feature-gate-2-auth-on-526ce7-gabbcarvzxs-projects.vercel.app>.
 - URL estável de `main`, validada em 23/09/2026: <https://correhub.vercel.app>.
 - Finalidade: desenvolvimento e validação pessoal não comercial, com custo obrigatório de R$ 0.
 
-Os deployments ficaram `Ready`, retornaram HTTP 200 e serviram o título `CorreHub` e o status `Em desenvolvimento`, sem erro de runtime. Como o preview usa Deployment Protection, a verificação do conteúdo da branch foi feita pela sessão autenticada da Vercel CLI.
+Os deployments ficaram `Ready`, retornaram HTTP 200 e serviram o título `CorreHub` e o status `Em desenvolvimento`, sem erro de runtime. Como o preview usa Deployment Protection, a verificação do conteúdo da branch foi feita pela sessão autenticada da Vercel CLI. O preview do Gate 2 também validou Google → Supabase → callback do app até o onboarding; reload, conclusão do onboarding, suspensão e logout permanecem cobertos pelo E2E determinístico local, sem mutar a conta real para simular suspensão.
 
 ## Variáveis e segurança
 
@@ -128,13 +129,14 @@ A Supabase CLI permanece fixada como dependência local. O Gate 2 não adiciona 
 
 - Organização: `correhub`, plano Free.
 - Projeto: `correhub` (`svvthxrixrnrrgosydtg`), região `sa-east-1` (São Paulo), estado `ACTIVE_HEALTHY` em 24/09/2026.
-- As sete migrations e o seed versionado foram aplicados; o histórico remoto corresponde ao local.
+- As oito migrations e o seed versionado foram aplicados; o histórico remoto corresponde ao local.
 - O lint remoto não encontrou erros, a Data API permite somente as leituras previstas e nega escrita anônima, domínio futuro e acesso direto ao schema `private`.
 - O contrato TypeScript normalizado de `public` é byte a byte idêntico entre local e remoto.
-- Nenhum add-on foi selecionado, as chaves JWT legadas estão desativadas e nenhuma credencial Supabase foi adicionada ao frontend ou à Vercel.
+- Nenhum add-on foi selecionado, as chaves JWT legadas estão desativadas e nenhum segredo Supabase foi adicionado ao frontend ou à Vercel.
 
 ## Fontes
 
 - [Especificação oficial](docs/superpowers/specs/2026-09-19-correhub-mvp-design.md)
 - [Plano aprovado do Gate 0](docs/superpowers/plans/2026-09-19-gate-0-foundation.md)
 - [Plano aprovado do Gate 1](docs/superpowers/plans/2026-09-23-gate-1-database-base.md)
+- [Plano aprovado do Gate 2](docs/superpowers/plans/2026-09-25-gate-2-auth-onboarding.md)
