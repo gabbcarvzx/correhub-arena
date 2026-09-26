@@ -11,7 +11,8 @@ insert into private.account_controls(user_id,status) values
  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','active'),
  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','active'),
  ('dddddddd-dddd-4ddd-8ddd-dddddddddddd','active'),
- ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','suspended');
+ ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','suspended')
+on conflict (user_id) do update set status = excluded.status;
 insert into private.platform_roles(user_id,role,granted_by) values
  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','moderator','dddddddd-dddd-4ddd-8ddd-dddddddddddd'),
  ('dddddddd-dddd-4ddd-8ddd-dddddddddddd','platform_admin',null);

@@ -13,7 +13,8 @@ select is((select count(*) from pg_catalog.pg_proc p join pg_catalog.pg_namespac
 select is((select count(*) from information_schema.routine_privileges where specific_schema='private' and grantee='PUBLIC' and routine_name in ('current_account_is_active','account_is_active_for_visibility','current_user_has_platform_role')),0::bigint,'PUBLIC cannot execute authorization helpers');
 
 insert into auth.users(id,email) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','surface@example.test');
-insert into private.account_controls(user_id,status) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','active');
+insert into private.account_controls(user_id,status) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','active')
+on conflict (user_id) do update set status = excluded.status;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}';
 select throws_ok($$insert into public.groups(slug,name,description,city_id,type,join_policy,owner_user_id)

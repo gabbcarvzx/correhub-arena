@@ -6,8 +6,10 @@ insert into auth.users(id,email) values
  ('80000000-0000-4000-8000-000000000001','delete-owner@example.test'),
  ('80000000-0000-4000-8000-000000000002','delete-member@example.test'),
  ('80000000-0000-4000-8000-000000000003','delete-actor@example.test');
-insert into public.profiles(id,username) values ('80000000-0000-4000-8000-000000000002','delete_member');
-insert into private.account_controls(user_id) values ('80000000-0000-4000-8000-000000000002');
+insert into public.profiles(id,username) values ('80000000-0000-4000-8000-000000000002','delete_member')
+on conflict (id) do update set username = excluded.username;
+insert into private.account_controls(user_id) values ('80000000-0000-4000-8000-000000000002')
+on conflict (user_id) do nothing;
 insert into private.platform_roles(user_id,role,granted_by) values ('80000000-0000-4000-8000-000000000002','moderator','80000000-0000-4000-8000-000000000003');
 insert into public.groups(id,slug,name,description,city_id,type,join_policy,status,owner_user_id,approved_by,approved_at)
 values ('81000000-0000-4000-8000-000000000001','grupo-delete','Grupo Delete','Descrição',
