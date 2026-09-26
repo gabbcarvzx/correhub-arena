@@ -29,7 +29,6 @@ type StoredCookie = { name: string; value: string; options: CookieOptions };
 export type LocalIdentity = {
   id: string;
   email: string;
-  password: string;
   cookies: StoredCookie[];
   accessToken: string;
   refreshToken: string;
@@ -38,10 +37,8 @@ export type LocalIdentity = {
 export async function createLocalIdentity(label: string): Promise<LocalIdentity> {
   const suffix = `${Date.now()}-${randomBytes(5).toString("hex")}`;
   const email = `correhub-${label}-${suffix}@example.test`;
-  const password = randomBytes(24).toString("base64url");
   const { data, error } = await admin.auth.admin.createUser({
     email,
-    password,
     email_confirm: true,
     user_metadata: { full_name: `Corredor ${label}` },
   });
@@ -60,7 +57,18 @@ export async function createLocalIdentity(label: string): Promise<LocalIdentity>
       },
     },
   });
-  const { data: signInData, error: signInError } = await client.auth.signInWithPassword({ email, password });
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+  });
+  if (linkError || !linkData.properties.hashed_token) {
+    await admin.auth.admin.deleteUser(data.user.id);
+    throw new Error(`Could not create local test verification: ${linkError?.code ?? "unknown"}`);
+  }
+  const { data: signInData, error: signInError } = await client.auth.verifyOtp({
+    type: "magiclink",
+    token_hash: linkData.properties.hashed_token,
+  });
   if (signInError || !signInData.session) {
     await admin.auth.admin.deleteUser(data.user.id);
     throw new Error(`Could not create local SSR session: ${signInError?.code ?? "unknown"}`);
@@ -69,11 +77,24 @@ export async function createLocalIdentity(label: string): Promise<LocalIdentity>
   return {
     id: data.user.id,
     email,
-    password,
     cookies: [...jar.values()],
     accessToken: signInData.session.access_token,
     refreshToken: signInData.session.refresh_token,
   };
+}
+
+export async function attemptPublicEmailSignup() {
+  const client = createClient(localUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const result = await client.auth.signUp({
+    email: `correhub-public-signup-${Date.now()}-${randomBytes(4).toString("hex")}@example.test`,
+    password: randomBytes(24).toString("base64url"),
+  });
+  if (result.data.user) {
+    await admin.auth.admin.deleteUser(result.data.user.id);
+  }
+  return result;
 }
 
 function sameSite(value: CookieOptions["sameSite"]): Cookie["sameSite"] {

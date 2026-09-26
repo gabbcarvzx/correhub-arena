@@ -3,6 +3,7 @@ import { expect, test, type BrowserContext } from "@playwright/test";
 import {
   authenticatedContext,
   applyRevokedRefreshState,
+  attemptPublicEmailSignup,
   createLocalIdentity,
   removeLocalIdentity,
   setLocalAccountStatus,
@@ -27,6 +28,12 @@ test.afterAll(async () => {
   for (const identity of identities.reverse()) {
     await removeLocalIdentity(identity);
   }
+});
+
+test("public email signup remains disabled", async () => {
+  const result = await attemptPublicEmailSignup();
+  expect(result.data.user).toBeNull();
+  expect(result.error).toBeTruthy();
 });
 
 test("visitor is sent to Google login from protected onboarding", async ({ page }) => {
@@ -134,6 +141,12 @@ test("Google handoff uses only the configured OAuth authorize endpoint", async (
   await page.goto("/login?returnTo=%2F");
   await page.getByRole("button", { name: "Continuar com Google" }).click({ noWaitAfter: true });
   await expect.poll(() => authorizeUrl).toContain("provider=google");
-  expect(authorizeUrl).toContain("redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback");
+  const authorize = new URL(authorizeUrl);
+  const redirectTo = new URL(authorize.searchParams.get("redirect_to") ?? "");
+  expect(authorize.searchParams.get("provider")).toBe("google");
+  expect(redirectTo.origin).toBe("http://localhost:3000");
+  expect(redirectTo.pathname).toBe("/auth/callback");
+  expect(redirectTo.searchParams.get("returnTo")).toBe("/");
+  expect(authorize.searchParams.get("scopes")).toBe("openid email profile");
   expect(authorizeUrl).not.toMatch(/service_role|client_secret|access_token/i);
 });
