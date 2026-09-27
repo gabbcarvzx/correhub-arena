@@ -60,7 +60,8 @@ export const profilePaceSchema = z
     }
   });
 
-const profileFormSchema = z.object({
+const profileFormSchema = z
+  .object({
   username: profileUsernameSchema,
   full_name: fullNameSchema,
   city_id: z.uuid("Selecione uma cidade válida"),
@@ -70,8 +71,9 @@ const profileFormSchema = z.object({
   }),
   bio: profileBioSchema,
   pace: profilePaceSchema,
-  is_private: z.boolean(),
-});
+    is_private: z.boolean(),
+  })
+  .strict();
 
 export const profileEditSchema = profileFormSchema.transform(({ pace, bio, ...values }) => {
   const paceMatch = /^(\d{1,2}):(\d{2})$/.exec(pace);
