@@ -24,6 +24,7 @@ export const groupRequestSchema = z
     join_policy: z.enum(GROUP_JOIN_POLICIES, { error: "Selecione como as pessoas entram" }),
   })
   .strict();
+export const groupUpdateSchema = groupRequestSchema.extend({ groupId: z.uuid() }).strict();
 
 export const groupReasonSchema = z.string().trim().min(3, "Explique o motivo").max(1000);
 export const groupActionSchema = z.object({ groupId: z.uuid() }).strict();

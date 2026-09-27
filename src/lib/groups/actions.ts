@@ -10,6 +10,7 @@ import {
   groupMemberActionSchema,
   groupReasonSchema,
   groupRequestSchema,
+  groupUpdateSchema,
   groupTransferActionSchema,
 } from "@/lib/validations/group";
 
@@ -50,6 +51,23 @@ export async function requestGroup(input: unknown): Promise<
   return { ok: true, groupId: data as string, slug: parsed.data.slug };
 }
 
+export async function updateGroup(input: unknown): Promise<GroupActionResult> {
+  const parsed = groupUpdateSchema.safeParse(input);
+  if (!parsed.success) return failure("validation_error", "Revise os dados do grupo.");
+  const ctx = await context(); if (ctx.error) return ctx.error;
+  const { error } = await ctx.supabase.rpc("update_group_profile", {
+    target_group_id: parsed.data.groupId,
+    requested_name: parsed.data.name,
+    requested_slug: parsed.data.slug,
+    requested_description: parsed.data.description,
+    requested_city_id: parsed.data.city_id,
+    requested_type: parsed.data.group_type,
+    requested_join_policy: parsed.data.join_policy,
+  });
+  const mapped = mapError(error, "Não foi possível salvar o grupo agora."); if (mapped) return mapped;
+  refresh(parsed.data.slug); return { ok: true };
+}
+
 async function rpcAction(name: string, input: unknown, args: (data: { groupId: string }) => Record<string, unknown>, slug?: string): Promise<GroupActionResult> {
   const parsed = groupActionSchema.safeParse(input); if (!parsed.success) return failure("validation_error", "Grupo inválido.");
   const ctx = await context(); if (ctx.error) return ctx.error;
@@ -57,14 +75,22 @@ async function rpcAction(name: string, input: unknown, args: (data: { groupId: s
   const mapped = mapError(error, "Não foi possível concluir a ação agora."); if (mapped) return mapped;
   refresh(slug); return { ok: true };
 }
-export const approveGroup = (input: unknown) => rpcAction("approve_group_request", input, ({ groupId }) => ({ target_group_id: groupId }));
+export async function approveGroup(input: unknown) {
+  return rpcAction("approve_group_request", input, ({ groupId }) => ({ target_group_id: groupId }));
+}
 export async function rejectGroup(input: unknown, reason: unknown) {
   const parsedReason = groupReasonSchema.safeParse(reason); if (!parsedReason.success) return failure("validation_error", "Informe um motivo válido.");
   return rpcAction("reject_group_request", input, ({ groupId }) => ({ target_group_id: groupId, reason: parsedReason.data }));
 }
-export const resubmitGroup = (input: unknown) => rpcAction("resubmit_group", input, ({ groupId }) => ({ target_group_id: groupId }));
-export const joinGroup = (input: unknown, slug?: string) => rpcAction("join_group", input, ({ groupId }) => ({ target_group_id: groupId }), slug);
-export const leaveGroup = (input: unknown, slug?: string) => rpcAction("leave_group", input, ({ groupId }) => ({ target_group_id: groupId }), slug);
+export async function resubmitGroup(input: unknown) {
+  return rpcAction("resubmit_group", input, ({ groupId }) => ({ target_group_id: groupId }));
+}
+export async function joinGroup(input: unknown, slug?: string) {
+  return rpcAction("join_group", input, ({ groupId }) => ({ target_group_id: groupId }), slug);
+}
+export async function leaveGroup(input: unknown, slug?: string) {
+  return rpcAction("leave_group", input, ({ groupId }) => ({ target_group_id: groupId }), slug);
+}
 
 async function memberAction(name: string, input: unknown, slug?: string): Promise<GroupActionResult> {
   const parsed = groupMemberActionSchema.safeParse(input); if (!parsed.success) return failure("validation_error", "Membro inválido.");
@@ -73,11 +99,21 @@ async function memberAction(name: string, input: unknown, slug?: string): Promis
   const mapped = mapError(error, "Não foi possível atualizar o membro agora."); if (mapped) return mapped;
   refresh(slug); return { ok: true };
 }
-export const approveGroupMember = (input: unknown, slug?: string) => memberAction("approve_group_member", input, slug);
-export const rejectGroupMember = (input: unknown, slug?: string) => memberAction("reject_group_member_request", input, slug);
-export const blockGroupMember = (input: unknown, slug?: string) => memberAction("block_group_member", input, slug);
-export const promoteGroupAdmin = (input: unknown, slug?: string) => memberAction("promote_group_admin", input, slug);
-export const demoteGroupAdmin = (input: unknown, slug?: string) => memberAction("demote_group_admin", input, slug);
+export async function approveGroupMember(input: unknown, slug?: string) {
+  return memberAction("approve_group_member", input, slug);
+}
+export async function rejectGroupMember(input: unknown, slug?: string) {
+  return memberAction("reject_group_member_request", input, slug);
+}
+export async function blockGroupMember(input: unknown, slug?: string) {
+  return memberAction("block_group_member", input, slug);
+}
+export async function promoteGroupAdmin(input: unknown, slug?: string) {
+  return memberAction("promote_group_admin", input, slug);
+}
+export async function demoteGroupAdmin(input: unknown, slug?: string) {
+  return memberAction("demote_group_admin", input, slug);
+}
 
 export async function followGroup(input: unknown): Promise<GroupActionResult & { following?: boolean }> {
   const parsed = groupFollowActionSchema.safeParse(input); if (!parsed.success) return failure("validation_error", "Grupo inválido.");
