@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(40);
+select plan(42);
 
 insert into auth.users(id,email) values
  ('43000000-0000-4000-8000-000000000001','membership-owner@example.test'),
@@ -84,6 +84,16 @@ select is((select gm.role from public.group_members gm join public.groups g on g
 
 set local role authenticated;
 set local request.jwt.claims='{"sub":"43000000-0000-4000-8000-000000000002","role":"authenticated"}';
+select lives_ok($$select public.update_group_profile(
+  (select id from public.groups where slug='membership-open'),
+  'Open Group Updated','membership-open','Open group updated',
+  '10000000-0000-4000-8000-000000000001','community','open'
+)$$,'active group admin edits approved group fields through allowlist');
+select throws_ok($$select public.update_group_profile(
+  (select id from public.groups where slug='membership-open'),
+  'Open Group Updated','membership-open-renamed','Open group updated',
+  '10000000-0000-4000-8000-000000000001','community','open'
+)$$,'42501','approved_slug_immutable','approved group slug stays immutable');
 select throws_ok($$select public.promote_group_admin((select id from public.groups where slug='membership-open'),'43000000-0000-4000-8000-000000000003')$$,'42501',null,'admin cannot promote another member');
 select throws_ok($$select public.block_group_member((select id from public.groups where slug='membership-open'),'43000000-0000-4000-8000-000000000001')$$,'42501',null,'admin cannot block owner');
 select lives_ok($$select public.block_group_member((select id from public.groups where slug='membership-open'),'43000000-0000-4000-8000-000000000003')$$,'admin blocks common member');

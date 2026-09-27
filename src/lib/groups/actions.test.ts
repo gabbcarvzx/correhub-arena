@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient }));
 vi.mock("@/lib/auth/current-account", () => ({ getCurrentAccountState }));
 vi.mock("next/cache", () => ({ revalidatePath }));
 
-import { approveGroup, followGroup, requestGroup } from "./actions";
+import { approveGroup, cancelOwnerTransfer, followGroup, initiateOwnerTransfer, requestGroup } from "./actions";
 
 const actor = "31000000-0000-4000-8000-000000000001";
 const groupId = "51000000-0000-4000-8000-000000000001";
@@ -66,5 +66,13 @@ describe("group actions", () => {
     await expect(requestGroup({ ...request, status: "approved" })).resolves.toMatchObject({ ok: false, code: "validation_error" });
     await expect(approveGroup({ groupId, actorId: actor })).resolves.toMatchObject({ ok: false, code: "validation_error" });
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("uses only group and target identifiers for ownership transfer", async () => {
+    rpc.mockResolvedValue({ data: "61000000-0000-4000-8000-000000000001", error: null });
+    await expect(initiateOwnerTransfer({ groupId, userId: "31000000-0000-4000-8000-000000000002" })).resolves.toMatchObject({ ok: true, transferId: expect.any(String) });
+    expect(rpc).toHaveBeenCalledWith("initiate_group_owner_transfer", { target_group_id: groupId, target_user_id: "31000000-0000-4000-8000-000000000002" });
+    await cancelOwnerTransfer({ transferId: "61000000-0000-4000-8000-000000000001" });
+    expect(rpc).toHaveBeenLastCalledWith("cancel_group_owner_transfer", { target_transfer_id: "61000000-0000-4000-8000-000000000001" });
   });
 });

@@ -6,7 +6,7 @@ const { createServerSupabaseClient } = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient }));
 
-import { getGroupBySlug, listGroupReviewQueue, listMyGroups } from "./queries";
+import { getGroupBySlug, getGroupOwnerTransfer, listGroupReviewQueue, listMyGroups } from "./queries";
 
 const publicRow = {
   id: "51000000-0000-4000-8000-000000000001",
@@ -67,5 +67,10 @@ describe("group queries", () => {
   it("maps SQL failures to a stable temporary error", async () => {
     rpc.mockResolvedValue({ data: null, error: { code: "XX000", message: "private sql" } });
     await expect(getGroupBySlug("corre-recife")).rejects.toMatchObject({ code: "temporary_error" });
+  });
+
+  it("maps the narrow ownership transfer projection", async () => {
+    rpc.mockResolvedValue({ data: [{ transfer_id: "61000000-0000-4000-8000-000000000001", group_id: publicRow.id, from_user_id: publicRow.owner_user_id, to_user_id: "31000000-0000-4000-8000-000000000002", effective_status: "pending", expires_at: "2026-10-04T12:00:00Z", created_at: "2026-09-27T12:00:00Z" }], error: null });
+    await expect(getGroupOwnerTransfer(publicRow.id)).resolves.toMatchObject({ status: "pending", toUserId: "31000000-0000-4000-8000-000000000002" });
   });
 });

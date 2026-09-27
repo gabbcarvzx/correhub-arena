@@ -10,6 +10,7 @@ import { decodeGroupCursor, encodeGroupCursor } from "./cursor";
 import type {
   CursorPage,
   GroupMemberPresentation,
+  GroupOwnerTransfer,
   GroupRelation,
   GroupReview,
   GroupSummary,
@@ -109,4 +110,17 @@ export async function listGroupMembers(groupId: string, status: "active" | "pend
   if (!parsed.success) throw new GroupQueryError("validation_error");
   const rows = await rpc("list_group_members", { target_group_id: parsed.data.groupId, requested_status: status, after_username: null, after_user_id: null, page_size: 20 }, provided);
   return rows.map((row) => ({ userId: required(row, "user_id"), username: required(row, "username"), fullName: required(row, "full_name"), avatarUrl: text(row.avatar_url), visibility: required(row, "visibility") as GroupMemberPresentation["visibility"], role: required(row, "member_role") as GroupMemberPresentation["role"], status: required(row, "member_status") as GroupMemberPresentation["status"], joinedAt: text(row.joined_at) }));
+}
+
+export async function getGroupOwnerTransfer(groupId: string, provided?: AppClient): Promise<GroupOwnerTransfer | null> {
+  const parsed = groupActionSchema.safeParse({ groupId });
+  if (!parsed.success) throw new GroupQueryError("validation_error");
+  const rows = await rpc("get_group_owner_transfer", { target_group_id: parsed.data.groupId }, provided);
+  if (!rows[0]) return null;
+  return {
+    transferId: required(rows[0], "transfer_id"), groupId: required(rows[0], "group_id"),
+    fromUserId: required(rows[0], "from_user_id"), toUserId: required(rows[0], "to_user_id"),
+    status: required(rows[0], "effective_status") as GroupOwnerTransfer["status"],
+    expiresAt: required(rows[0], "expires_at"), createdAt: required(rows[0], "created_at"),
+  };
 }

@@ -172,17 +172,28 @@ as $$
 declare
   actor uuid := (select auth.uid());
   current_status text;
+  current_slug text;
+  current_owner uuid;
 begin
   if actor is null or not private.current_account_is_group_ready() then
     raise exception using errcode='42501', message='forbidden';
   end if;
-  select g.status into current_status
+  select g.status,g.slug,g.owner_user_id into current_status,current_slug,current_owner
   from public.groups g
-  where g.id=target_group_id and g.owner_user_id=actor
+  where g.id=target_group_id
   for update;
   if not found then raise exception using errcode='P0002', message='group_not_found'; end if;
-  if current_status not in ('pending','rejected') then
+  if current_status in ('pending','rejected') and current_owner<>actor then
     raise exception using errcode='42501', message='group_not_editable';
+  end if;
+  if current_status='approved' and private.current_group_role(target_group_id) not in ('admin','owner') then
+    raise exception using errcode='42501', message='group_not_editable';
+  end if;
+  if current_status not in ('pending','rejected','approved') then
+    raise exception using errcode='42501', message='group_not_editable';
+  end if;
+  if current_status='approved' and requested_slug<>current_slug then
+    raise exception using errcode='42501', message='approved_slug_immutable';
   end if;
   if requested_slug is null
     or requested_slug <> pg_catalog.lower(requested_slug)

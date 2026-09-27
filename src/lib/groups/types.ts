@@ -53,3 +53,13 @@ export interface GroupMemberPresentation {
   status: GroupMemberStatus;
   joinedAt: string | null;
 }
+
+export interface GroupOwnerTransfer {
+  transferId: string;
+  groupId: string;
+  fromUserId: string;
+  toUserId: string;
+  status: "pending" | "accepted" | "cancelled" | "expired";
+  expiresAt: string;
+  createdAt: string;
+}

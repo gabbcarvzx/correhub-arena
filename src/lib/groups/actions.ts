@@ -138,3 +138,19 @@ export async function acceptOwnerTransfer(input: unknown) {
   const mapped = mapError(error, "Não foi possível aceitar a transferência agora."); if (mapped) return mapped;
   refresh(); return { ok: true } as GroupActionResult;
 }
+
+export async function initiateOwnerTransfer(input: unknown): Promise<GroupActionResult & { transferId?: string }> {
+  const parsed = groupMemberActionSchema.safeParse(input); if (!parsed.success) return failure("validation_error", "Escolha um membro elegível.");
+  const ctx = await context(); if (ctx.error) return ctx.error;
+  const { data, error } = await ctx.supabase.rpc("initiate_group_owner_transfer", { target_group_id: parsed.data.groupId, target_user_id: parsed.data.userId });
+  const mapped = mapError(error, "Não foi possível iniciar a transferência agora."); if (mapped) return mapped;
+  refresh(); return { ok: true, transferId: data as string };
+}
+
+export async function cancelOwnerTransfer(input: unknown): Promise<GroupActionResult> {
+  const parsed = groupTransferActionSchema.safeParse(input); if (!parsed.success) return failure("validation_error", "Transferência inválida.");
+  const ctx = await context(); if (ctx.error) return ctx.error;
+  const { error } = await ctx.supabase.rpc("cancel_group_owner_transfer", { target_transfer_id: parsed.data.transferId });
+  const mapped = mapError(error, "Não foi possível cancelar a transferência agora."); if (mapped) return mapped;
+  refresh(); return { ok: true };
+}
