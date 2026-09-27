@@ -17,6 +17,12 @@ export default async function Home() {
           Uma base simples para construir encontros de corrida locais com cuidado.
         </p>
         <nav className="mt-6 flex flex-wrap gap-3" aria-label="Acesso">
+          <Link
+            className="inline-flex min-h-11 items-center rounded-full border border-border px-5 py-3 font-semibold text-foreground"
+            href="/people"
+          >
+            Descobrir
+          </Link>
           {state.kind === "anonymous" ? (
             <Link
               className="inline-flex min-h-11 items-center rounded-full bg-primary px-5 py-3 font-bold text-on-primary transition-colors hover:bg-primary-hover"
@@ -31,6 +37,14 @@ export default async function Home() {
               href="/onboarding"
             >
               Continuar cadastro
+            </Link>
+          ) : null}
+          {state.kind === "active" && state.onboardingCompleted ? (
+            <Link
+              className="inline-flex min-h-11 items-center rounded-full bg-primary px-5 py-3 font-bold text-on-primary transition-colors hover:bg-primary-hover"
+              href="/me"
+            >
+              Perfil
             </Link>
           ) : null}
           {state.kind === "active" || state.kind === "suspended" || state.kind === "deleted" ? (
