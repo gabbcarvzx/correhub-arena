@@ -223,7 +223,7 @@ as $$
   limit case
     when page_size is null then 20
     when page_size < 1 then 1
-    when page_size > 20 then 20
+    when page_size > 21 then 21
     else page_size
   end;
 $$;
