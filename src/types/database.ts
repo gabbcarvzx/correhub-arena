@@ -688,37 +688,17 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           city_id: string | null
+          city_name: string | null
+          city_slug: string | null
+          country_code: string | null
           created_at: string | null
           full_name: string | null
           id: string | null
           pace_seconds_per_km: number | null
           preferred_distance: string | null
           running_level: string | null
+          state_code: string | null
           username: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          city_id?: string | null
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          pace_seconds_per_km?: number | null
-          preferred_distance?: string | null
-          running_level?: string | null
-          username?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          city_id?: string | null
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          pace_seconds_per_km?: number | null
-          preferred_distance?: string | null
-          running_level?: string | null
-          username?: string | null
         }
         Relationships: [
           {
@@ -732,6 +712,32 @@ export type Database = {
       }
     }
     Functions: {
+      discover_profiles: {
+        Args: {
+          after_id?: string
+          after_username?: string
+          filter_city_id?: string
+          page_size?: number
+          search_query?: string
+        }
+        Returns: {
+          avatar_url: string
+          bio: string
+          city_id: string
+          city_name: string
+          city_slug: string
+          country_code: string
+          created_at: string
+          full_name: string
+          id: string
+          pace_seconds_per_km: number
+          preferred_distance: string
+          running_level: string
+          state_code: string
+          username: string
+          visibility: string
+        }[]
+      }
       ensure_current_account_foundation: {
         Args: never
         Returns: {
@@ -744,6 +750,52 @@ export type Database = {
         Returns: {
           account_status: string
           onboarding_completed: boolean
+        }[]
+      }
+      get_profile_by_username: {
+        Args: { target_username: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          city_id: string
+          city_name: string
+          city_slug: string
+          country_code: string
+          created_at: string
+          full_name: string
+          id: string
+          pace_seconds_per_km: number
+          preferred_distance: string
+          running_level: string
+          state_code: string
+          username: string
+          visibility: string
+        }[]
+      }
+      list_profile_connections: {
+        Args: {
+          after_id?: string
+          after_username?: string
+          connection_direction: string
+          page_size?: number
+          target_username: string
+        }
+        Returns: {
+          avatar_url: string
+          bio: string
+          city_id: string
+          city_name: string
+          city_slug: string
+          country_code: string
+          created_at: string
+          full_name: string
+          id: string
+          pace_seconds_per_km: number
+          preferred_distance: string
+          running_level: string
+          state_code: string
+          username: string
+          visibility: string
         }[]
       }
     }

@@ -1,6 +1,6 @@
 # CorreHub
 
-Fundação do CorreHub em Next.js com banco PostgreSQL/Supabase reproduzível. O Gate 2 adiciona autenticação Google com PKCE, sessão SSR em cookies e onboarding governado por RLS; funcionalidades sociais continuam reservadas ao Gate 3.
+Fundação do CorreHub em Next.js com banco PostgreSQL/Supabase reproduzível. O Gate 3 adiciona perfis públicos/privados, edição do próprio perfil, descoberta básica de corredores e follow unilateral governados por RLS.
 
 ## Stack fixada
 
@@ -61,7 +61,17 @@ npm run db:stop
 
 As migrations versionadas são a única fonte de verdade do schema. `supabase/seed.sql` contém apenas São Lourenço da Mata e o singleton `launch_city_id`; fixtures dos testes vivem dentro de transações com rollback. Comandos `--local` operam somente na stack Docker. Comandos `--linked` são reservados à validação deliberada do projeto remoto e nunca fazem parte dos testes locais ou da CI.
 
-`test:auth` aceita exclusivamente `http://127.0.0.1:54321`, cria identidades efêmeras pela Admin API local, obtém cookies com o adapter oficial de `@supabase/ssr`, inicia o Next com somente as três variáveis públicas e apaga as identidades ao final. A service role efêmera permanece no processo de fixture e não entra no Next, browser, GitHub Secrets ou logs. O fluxo é executado duas vezes durante a validação do Gate para comprovar isolamento.
+`test:auth` aceita exclusivamente `http://127.0.0.1:54321`, cria identidades efêmeras pela Admin API local, obtém cookies com o adapter oficial de `@supabase/ssr`, inicia o Next com somente as três variáveis públicas e apaga as identidades ao final. A service role efêmera permanece no processo Playwright de fixture e não entra no Next, browser, GitHub Secrets ou logs. A suíte cobre Auth, onboarding, perfis, privacidade, descoberta e follow contra o banco local real.
+
+### Perfis e social básico
+
+- `/me` mostra o perfil próprio; `/settings/profile` edita somente campos permitidos.
+- `/u/[username]` é a URL canônica; `/people` descobre apenas perfis públicos, ativos e completos por cidade.
+- `/u/[username]/followers` e `/following` são listas autenticadas e sanitizadas, sem contagens persistidas.
+- Follow é unilateral e nunca concede acesso a bio, cidade, nível, distância, pace, avatar real, posts ou grafo de um perfil privado.
+- Tornar o perfil privado também privatiza posts pessoais públicos na mesma transação. Torná-lo público depois não republica conteúdo antigo.
+
+Grupos, corridas, feed, recomendações amplas e descoberta de outros domínios continuam fora deste Gate.
 
 ### Auth e callbacks
 
@@ -87,7 +97,8 @@ Para iniciar o provider Google local, forneça o secret somente ao processo da S
 - `supabase/seed.sql`: dados invariantes de lançamento, sem usuários ou conteúdo fictício.
 - `src/types/database.ts`: tipos gerados do schema exposto `public`.
 - `src/lib/supabase/`: clientes separados de browser, servidor e Proxy.
-- `src/app/login`, `src/app/auth/callback`, `src/app/onboarding`, `src/app/logout`: fluxo Auth e onboarding do Gate 2.
+- `src/app/login`, `src/app/auth/callback`, `src/app/onboarding`, `src/app/logout`: fluxo Auth e onboarding.
+- `src/app/me`, `src/app/u`, `src/app/settings/profile`, `src/app/people`: perfis e social básico do Gate 3.
 - `tests/e2e/`: jornadas determinísticas contra Supabase Auth local e Chromium.
 - `docs/superpowers/specs/`: especificação oficial.
 - `docs/superpowers/plans/`: planos aprovados dos Gates.
@@ -98,7 +109,7 @@ Os tokens vivem exclusivamente em `src/app/globals.css`. Pares usados na landing
 
 ## Git e CI
 
-`main` recebe baselines integrados. O Gate 2 usa `feature/gate-2-auth-onboarding`; correções usam `fix/...`. Commits seguem Conventional Commits e permanecem pequenos. Pull requests executam quality, banco e Auth/E2E local sem usar projeto remoto, conta Google real ou secrets de produção.
+`main` recebe baselines integrados. O Gate 3 usa `feature/gate-3-profiles-social-basic`; correções usam `fix/...`. Commits seguem Conventional Commits e permanecem pequenos. Pull requests executam quality, banco e Auth/social E2E local sem usar projeto remoto, conta Google real ou secrets de produção.
 
 ## Deploy Vercel
 
@@ -123,7 +134,7 @@ O schema `private` não faz parte da configuração da Data API e não concede a
 
 O custo obrigatório desta fase é R$ 0. A validação usa ferramentas gratuitas dentro das cotas aplicáveis e não compra domínio, add-on, upgrade ou créditos. O Vercel Hobby só é elegível para desenvolvimento e validação pessoal não comercial; essa condição deve ser reconfirmada antes de qualquer uso comercial.
 
-A Supabase CLI permanece fixada como dependência local. O Gate 2 não adiciona Storage, avatar remoto, descoberta, follows, feed, grupos ou corridas. O Google Client Secret permanece no Supabase Auth; a Vercel recebe somente variáveis públicas usadas pelo app.
+A Supabase CLI permanece fixada como dependência local. O Gate 3 não adiciona Storage, upload de avatar, feed, grupos ou corridas. O Google Client Secret permanece no Supabase Auth; a Vercel recebe somente variáveis públicas usadas pelo app.
 
 ### Banco remoto validado
 
