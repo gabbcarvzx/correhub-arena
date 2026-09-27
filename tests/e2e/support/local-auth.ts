@@ -34,6 +34,61 @@ export type LocalIdentity = {
   refreshToken: string;
 };
 
+export const launchCityId = "10000000-0000-4000-8000-000000000001";
+
+export async function completeLocalProfile(
+  identity: LocalIdentity,
+  input: {
+    username: string;
+    fullName: string;
+    isPrivate?: boolean;
+    bio?: string;
+  },
+) {
+  const client = createClient(localUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { error: sessionError } = await client.auth.setSession({
+    access_token: identity.accessToken,
+    refresh_token: identity.refreshToken,
+  });
+  if (sessionError) {
+    throw new Error("Could not prepare local profile fixture session");
+  }
+  const { error } = await client
+    .from("profiles")
+    .update({
+      username: input.username,
+      full_name: input.fullName,
+      city_id: launchCityId,
+      running_level: "beginner",
+      preferred_distance: "up_to_5k",
+      bio: input.bio ?? null,
+      pace_seconds_per_km: 390,
+      is_private: input.isPrivate ?? false,
+      onboarding_completed: true,
+    })
+    .eq("id", identity.id);
+  if (error) {
+    throw new Error(`Could not complete local profile fixture: ${error.code ?? "unknown"}`);
+  }
+}
+
+export async function attemptCrossUserProfileUpdate(
+  actor: LocalIdentity,
+  targetUserId: string,
+) {
+  const client = createClient(localUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { error: sessionError } = await client.auth.setSession({
+    access_token: actor.accessToken,
+    refresh_token: actor.refreshToken,
+  });
+  if (sessionError) throw new Error("Could not prepare local cross-user fixture session");
+  return client.from("profiles").update({ full_name: "Cross-user mutation" }).eq("id", targetUserId).select("id");
+}
+
 export async function createLocalIdentity(label: string): Promise<LocalIdentity> {
   const suffix = `${Date.now()}-${randomBytes(5).toString("hex")}`;
   const email = `correhub-${label}-${suffix}@example.test`;
