@@ -12,6 +12,7 @@ const localStatus = {
   API_URL: "http://127.0.0.1:54321",
   ANON_KEY: "publishable-local-test",
   SERVICE_ROLE_KEY: "service-role-local-test",
+  SECRET_KEY: "secret-local-test",
 };
 
 describe("Auth E2E environment boundary", () => {
@@ -43,6 +44,7 @@ describe("Auth E2E environment boundary", () => {
       NEXT_PUBLIC_SUPABASE_URL: LOCAL_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: localStatus.ANON_KEY,
       NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
+      SUPABASE_SECRET_KEY: localStatus.SECRET_KEY,
     });
     expect(Object.keys(nextEnvironment)).not.toEqual(
       expect.arrayContaining([
@@ -53,5 +55,6 @@ describe("Auth E2E environment boundary", () => {
       ]),
     );
     expect(Object.values(nextEnvironment)).not.toContain(localStatus.SERVICE_ROLE_KEY);
+    expect(Object.keys(nextEnvironment).filter((name) => name.startsWith("NEXT_PUBLIC_"))).not.toContain("SUPABASE_SECRET_KEY");
   });
 });

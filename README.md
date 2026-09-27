@@ -61,7 +61,7 @@ npm run db:stop
 
 As migrations versionadas são a única fonte de verdade do schema. `supabase/seed.sql` contém apenas São Lourenço da Mata e o singleton `launch_city_id`; fixtures dos testes vivem dentro de transações com rollback. Comandos `--local` operam somente na stack Docker. Comandos `--linked` são reservados à validação deliberada do projeto remoto e nunca fazem parte dos testes locais ou da CI.
 
-`test:auth` aceita exclusivamente `http://127.0.0.1:54321`, cria identidades efêmeras pela Admin API local, obtém cookies com o adapter oficial de `@supabase/ssr`, inicia o Next com somente as três variáveis públicas e apaga as identidades ao final. A service role efêmera permanece no processo Playwright de fixture e não entra no Next, browser, GitHub Secrets ou logs. A suíte cobre Auth, onboarding, perfis, privacidade, descoberta e follow contra o banco local real.
+`test:auth` aceita exclusivamente `http://127.0.0.1:54321`, cria identidades efêmeras pela Admin API local, obtém cookies com o adapter oficial de `@supabase/ssr` e apaga identidades, grupos e mídia ao final. A service role efêmera permanece no processo Playwright de fixture. A secret key local moderna entra somente no processo servidor Next para validar o bucket privado `group-media`; nenhuma delas alcança browser, GitHub Secrets ou logs. A suíte cobre Auth, onboarding, perfis, privacidade, descoberta, follows e jornadas de grupos contra o banco local real.
 
 ### Perfis e social básico
 
@@ -71,7 +71,15 @@ As migrations versionadas são a única fonte de verdade do schema. `supabase/se
 - Follow é unilateral e nunca concede acesso a bio, cidade, nível, distância, pace, avatar real, posts ou grafo de um perfil privado.
 - Tornar o perfil privado também privatiza posts pessoais públicos na mesma transação. Torná-lo público depois não republica conteúdo antigo.
 
-Grupos, corridas, feed, recomendações amplas e descoberta de outros domínios continuam fora deste Gate.
+### Grupos
+
+- `/grupos/solicitar` cria uma solicitação; `/grupos/meus` acompanha pending, rejected e approved sem expor pedidos ao público.
+- `/grupos/[slug]` separa seguir de participar. Entrada pode ser livre ou depender de aprovação.
+- Owner e gestores autorizados usam as superfícies de configurações e membros; transferência de responsabilidade exige aceite e expira em sete dias.
+- `/admin/grupos` oferece somente a fila mínima de aprovação para `platform_admin`, com autoaprovação negada pelo banco.
+- A mídia fica em bucket privado e é normalizada no servidor. Não há contadores persistidos, billing ou descoberta geral de grupos.
+
+Corridas, recorrência, agenda, feed, recomendações amplas e descoberta de outros domínios continuam fora deste Gate.
 
 ### Auth e callbacks
 
@@ -99,6 +107,7 @@ Para iniciar o provider Google local, forneça o secret somente ao processo da S
 - `src/lib/supabase/`: clientes separados de browser, servidor e Proxy.
 - `src/app/login`, `src/app/auth/callback`, `src/app/onboarding`, `src/app/logout`: fluxo Auth e onboarding.
 - `src/app/me`, `src/app/u`, `src/app/settings/profile`, `src/app/people`: perfis e social básico do Gate 3.
+- `src/app/grupos`, `src/app/admin/grupos`, `src/lib/groups`: solicitação, aprovação, membership, hierarchy, ownership e follows do Gate 4.
 - `tests/e2e/`: jornadas determinísticas contra Supabase Auth local e Chromium.
 - `docs/superpowers/specs/`: especificação oficial.
 - `docs/superpowers/plans/`: planos aprovados dos Gates.

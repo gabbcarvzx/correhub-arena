@@ -116,7 +116,7 @@ try {
   };
   const playwright = spawnSync(
     process.execPath,
-    ["node_modules/@playwright/test/cli.js", "test"],
+    ["node_modules/@playwright/test/cli.js", "test", ...process.argv.slice(2)],
     {
       cwd: process.cwd(),
       env: playwrightEnvironment,

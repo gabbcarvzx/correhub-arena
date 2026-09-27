@@ -15,6 +15,7 @@ function requiredEnvironment(name: string): string {
 const localUrl = requiredEnvironment("NEXT_PUBLIC_SUPABASE_URL");
 const publishableKey = requiredEnvironment("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
 const serviceRoleKey = requiredEnvironment("LOCAL_SUPABASE_SERVICE_ROLE_KEY");
+const secretKey = requiredEnvironment("SUPABASE_SECRET_KEY");
 
 if (localUrl !== "http://127.0.0.1:54321") {
   throw new Error("Local Auth fixtures require the isolated Supabase test environment");
@@ -23,6 +24,7 @@ if (localUrl !== "http://127.0.0.1:54321") {
 const admin = createClient(localUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+const storageAdmin = createClient(localUrl, secretKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
 type StoredCookie = { name: string; value: string; options: CookieOptions };
 
@@ -210,6 +212,90 @@ export function setLocalAccountStatus(identity: LocalIdentity, status: "active" 
   if (result.status !== 0) {
     throw new Error("Could not set the local account fixture status");
   }
+}
+
+function fixtureSql(sql: string, errorMessage: string) {
+  const result = spawnSync(
+    "docker",
+    ["exec", "supabase_db_correhub", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", sql],
+    { encoding: "utf8", windowsHide: true },
+  );
+  if (result.status !== 0) throw new Error(errorMessage);
+}
+
+function fixtureSqlValue(sql: string, errorMessage: string) {
+  const result = spawnSync(
+    "docker",
+    ["exec", "supabase_db_correhub", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-tA", "-F", "|", "-c", sql],
+    { encoding: "utf8", windowsHide: true },
+  );
+  if (result.status !== 0) throw new Error(errorMessage);
+  return result.stdout.trim();
+}
+
+export function setLocalPlatformRole(identity: LocalIdentity, role: "platform_admin" | "moderator") {
+  if (!/^[0-9a-f-]{36}$/i.test(identity.id)) throw new Error("Fixture identity is not a UUID");
+  fixtureSql(`insert into private.platform_roles(user_id,role) values ('${identity.id}'::uuid,'${role}') on conflict(user_id,role) do nothing;`, "Could not set the local platform role");
+}
+
+function identityClient(identity: LocalIdentity) {
+  const client = createClient(localUrl, publishableKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  return client.auth.setSession({ access_token: identity.accessToken, refresh_token: identity.refreshToken }).then(({ error }) => {
+    if (error) throw new Error("Could not prepare local group fixture session");
+    return client;
+  });
+}
+
+export async function localGroupRpc(identity: LocalIdentity, name: string, args: Record<string, unknown>, options: { allowError?: boolean } = {}) {
+  const client = await identityClient(identity);
+  const result = await client.rpc(name as never, args as never);
+  if (result.error && !options.allowError) throw new Error(`Local group RPC failed: ${result.error.code ?? "unknown"}`);
+  return result as { data: unknown; error: { code?: string; message?: string } | null };
+}
+
+export async function createLocalGroup(identity: LocalIdentity, input: { slug: string; joinPolicy: "open" | "approval_required" }) {
+  const result = await localGroupRpc(identity, "request_group", {
+    requested_name: `Grupo ${input.slug.slice(0, 24)}`, requested_slug: input.slug,
+    requested_description: "Comunidade local de corrida criada para teste determinístico.", requested_city_id: launchCityId,
+    requested_type: "community", requested_join_policy: input.joinPolicy,
+  });
+  return { id: result.data as string, slug: input.slug };
+}
+
+export async function getLocalGroupBySlug(slug: string) {
+  if (!/^[a-z0-9-]{3,100}$/.test(slug)) throw new Error("Fixture slug is invalid");
+  const output = fixtureSqlValue(`select id::text||'|'||slug||'|'||status from public.groups where slug='${slug}';`, "Could not read local group fixture");
+  const [id, storedSlug, status] = output.split("|");
+  if (!id || !storedSlug || !status) throw new Error("Could not read local group fixture");
+  return { id, slug: storedSlug, status };
+}
+
+export async function getLocalGroupRelation(groupId: string, userId: string) {
+  if (![groupId,userId].every((id)=>/^[0-9a-f-]{36}$/i.test(id))) throw new Error("Fixture relation IDs are invalid");
+  const output = fixtureSqlValue(`select role||'|'||status from public.group_members where group_id='${groupId}'::uuid and user_id='${userId}'::uuid;`, "Could not read local group relation");
+  if (!output) return null;
+  const [role,status]=output.split("|"); return {role,status};
+}
+
+export async function removeLocalGroups(identities: LocalIdentity[]) {
+  const ids = identities.map(({ id }) => id);
+  if (!ids.length) return;
+  if (ids.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) throw new Error("Fixture identity is not a UUID");
+  const actors=ids.map((id) => `'${id}'::uuid`).join(",");
+  const groups=`select id from public.groups where created_by in (${actors})`;
+  const objectPaths=fixtureSqlValue(`select object_path from private.media_uploads where target_type in ('group_avatar','group_cover') and target_id in (${groups}) and object_path is not null;`,"Could not read local media fixtures").split(/\r?\n/).filter(Boolean);
+  if(objectPaths.length){const {error}=await storageAdmin.storage.from("group-media").remove(objectPaths);if(error)throw new Error("Could not remove local media objects");}
+  fixtureSql(`delete from private.media_uploads where target_type in ('group_avatar','group_cover') and target_id in (${groups}); delete from public.activity_events where group_id in (${groups}) or (entity_type='group' and entity_id in (${groups})); delete from public.notifications where target_type='group' and target_id in (${groups}); delete from private.analytics_events where entity_type='group' and entity_id in (${groups}); delete from private.admin_audit_logs where target_type='group' and target_id in (${groups}); delete from private.domain_event_receipts where entity_type='group' and entity_id in (${groups}); delete from public.groups where created_by in (${actors});`, "Could not remove local group fixtures");
+}
+
+export async function tryDirectGroupMediaUpload(identity: LocalIdentity, groupId: string) {
+  const client = await identityClient(identity);
+  return client.storage.from("group-media").upload(`${groupId}/avatar/direct.webp`, new Uint8Array([1, 2, 3]), { contentType: "image/webp", upsert: false });
+}
+
+export function expireLocalOwnerTransfer(groupId: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(groupId)) throw new Error("Fixture group is not a UUID");
+  fixtureSql(`update private.group_owner_transfers set created_at=pg_catalog.now()-interval '9 days' where group_id='${groupId}'::uuid and status='accepted'; update private.group_owner_transfers set created_at=pg_catalog.now()-interval '8 days',expires_at=pg_catalog.now()-interval '1 day' where group_id='${groupId}'::uuid and status='pending';`, "Could not expire local ownership transfer");
 }
 
 export async function applyRevokedRefreshState(
