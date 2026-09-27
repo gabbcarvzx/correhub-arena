@@ -724,6 +724,18 @@ export type Database = {
         Args: { target_group_id: string }
         Returns: undefined
       }
+      authorize_group_media_upload: {
+        Args: {
+          media_kind: string
+          requested_content_hash: string
+          requested_size_bytes: number
+          target_group_id: string
+        }
+        Returns: {
+          object_path: string
+          upload_id: string
+        }[]
+      }
       block_group_member: {
         Args: { target_group_id: string; target_user_id: string }
         Returns: undefined
@@ -769,6 +781,14 @@ export type Database = {
           onboarding_completed: boolean
         }[]
       }
+      fail_group_media_upload: {
+        Args: { target_upload_id: string }
+        Returns: undefined
+      }
+      finalize_group_media_upload: {
+        Args: { target_upload_id: string }
+        Returns: undefined
+      }
       get_current_account_state: {
         Args: never
         Returns: {
@@ -804,6 +824,10 @@ export type Database = {
           status: string
           updated_at: string
         }[]
+      }
+      get_group_media_path: {
+        Args: { media_kind: string; target_group_id: string }
+        Returns: string
       }
       get_group_owner_transfer: {
         Args: { target_group_id: string }
