@@ -712,6 +712,30 @@ export type Database = {
       }
     }
     Functions: {
+      accept_group_owner_transfer: {
+        Args: { target_transfer_id: string }
+        Returns: undefined
+      }
+      approve_group_member: {
+        Args: { target_group_id: string; target_user_id: string }
+        Returns: undefined
+      }
+      approve_group_request: {
+        Args: { target_group_id: string }
+        Returns: undefined
+      }
+      block_group_member: {
+        Args: { target_group_id: string; target_user_id: string }
+        Returns: undefined
+      }
+      cancel_group_owner_transfer: {
+        Args: { target_transfer_id: string }
+        Returns: undefined
+      }
+      demote_group_admin: {
+        Args: { target_group_id: string; target_user_id: string }
+        Returns: undefined
+      }
       discover_profiles: {
         Args: {
           after_id?: string
@@ -752,6 +776,68 @@ export type Database = {
           onboarding_completed: boolean
         }[]
       }
+      get_current_group_relation: {
+        Args: { target_group_id: string }
+        Returns: {
+          joined_at: string
+          relation_role: string
+          relation_status: string
+        }[]
+      }
+      get_group_by_slug: {
+        Args: { target_slug: string }
+        Returns: {
+          approved_at: string
+          avatar_url: string
+          city_id: string
+          city_name: string
+          cover_url: string
+          created_at: string
+          description: string
+          group_type: string
+          id: string
+          is_owner: boolean
+          join_policy: string
+          name: string
+          owner_user_id: string
+          slug: string
+          status: string
+          updated_at: string
+        }[]
+      }
+      get_group_owner_transfer: {
+        Args: { target_group_id: string }
+        Returns: {
+          created_at: string
+          effective_status: string
+          expires_at: string
+          from_user_id: string
+          group_id: string
+          to_user_id: string
+          transfer_id: string
+        }[]
+      }
+      get_group_review: {
+        Args: { target_group_id: string }
+        Returns: {
+          avatar_url: string
+          city_id: string
+          city_name: string
+          cover_url: string
+          created_at: string
+          created_by: string
+          description: string
+          group_type: string
+          id: string
+          join_policy: string
+          name: string
+          owner_user_id: string
+          rejection_reason: string
+          slug: string
+          status: string
+          updated_at: string
+        }[]
+      }
       get_profile_by_username: {
         Args: { target_username: string }
         Returns: {
@@ -770,6 +856,73 @@ export type Database = {
           state_code: string
           username: string
           visibility: string
+        }[]
+      }
+      initiate_group_owner_transfer: {
+        Args: { target_group_id: string; target_user_id: string }
+        Returns: string
+      }
+      join_group: { Args: { target_group_id: string }; Returns: string }
+      leave_group: { Args: { target_group_id: string }; Returns: undefined }
+      list_group_members: {
+        Args: {
+          after_user_id?: string
+          after_username?: string
+          page_size?: number
+          requested_status?: string
+          target_group_id: string
+        }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          joined_at: string
+          member_role: string
+          member_status: string
+          user_id: string
+          username: string
+          visibility: string
+        }[]
+      }
+      list_group_review_queue: {
+        Args: {
+          after_created_at?: string
+          after_id?: string
+          page_size?: number
+        }
+        Returns: {
+          city_id: string
+          city_name: string
+          created_at: string
+          created_by: string
+          description: string
+          group_type: string
+          id: string
+          join_policy: string
+          name: string
+          owner_user_id: string
+          slug: string
+          status: string
+          updated_at: string
+        }[]
+      }
+      list_my_groups: {
+        Args: {
+          after_id?: string
+          after_updated_at?: string
+          page_size?: number
+        }
+        Returns: {
+          avatar_url: string
+          group_type: string
+          id: string
+          join_policy: string
+          name: string
+          rejection_reason: string
+          relation_role: string
+          relation_status: string
+          slug: string
+          status: string
+          updated_at: string
         }[]
       }
       list_profile_connections: {
@@ -797,6 +950,50 @@ export type Database = {
           username: string
           visibility: string
         }[]
+      }
+      promote_group_admin: {
+        Args: { target_group_id: string; target_user_id: string }
+        Returns: undefined
+      }
+      reject_group_member_request: {
+        Args: { target_group_id: string; target_user_id: string }
+        Returns: undefined
+      }
+      reject_group_request: {
+        Args: { reason: string; target_group_id: string }
+        Returns: undefined
+      }
+      request_group: {
+        Args: {
+          requested_city_id: string
+          requested_description: string
+          requested_join_policy: string
+          requested_name: string
+          requested_slug: string
+          requested_type: string
+        }
+        Returns: string
+      }
+      restore_group: {
+        Args: { reason: string; target_group_id: string }
+        Returns: undefined
+      }
+      resubmit_group: { Args: { target_group_id: string }; Returns: undefined }
+      suspend_group: {
+        Args: { reason: string; target_group_id: string }
+        Returns: undefined
+      }
+      update_group_profile: {
+        Args: {
+          requested_city_id: string
+          requested_description: string
+          requested_join_policy: string
+          requested_name: string
+          requested_slug: string
+          requested_type: string
+          target_group_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
