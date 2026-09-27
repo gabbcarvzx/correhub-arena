@@ -8,6 +8,7 @@ import {
 } from "@/lib/validations/profile";
 
 import { ProfileAvatar } from "./profile-avatar";
+import { FollowButton } from "@/components/social/follow-button";
 
 type Viewer = "visitor" | "authenticated" | "self";
 
@@ -19,9 +20,11 @@ function formatPace(seconds: number): string {
 export function ProfileDetail({
   profile,
   viewer,
+  isFollowing = false,
 }: {
   profile: ProfilePresentation;
   viewer: Viewer;
+  isFollowing?: boolean;
 }) {
   const isPrivate = profile.visibility === "private";
   const returnTo = sanitizeInternalReturnTo(`/u/${profile.username}`);
@@ -106,7 +109,13 @@ export function ProfileDetail({
           <Link className="inline-flex min-h-11 items-center rounded-full bg-primary px-5 py-3 font-bold text-on-primary hover:bg-primary-hover" href={loginHref}>
             Entrar para seguir
           </Link>
-        ) : null}
+        ) : (
+          <FollowButton
+            initialFollowing={isFollowing}
+            targetUserId={profile.id}
+            username={profile.username}
+          />
+        )}
       </nav>
     </article>
   );

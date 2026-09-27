@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 import type { ProfilePresentation } from "@/lib/profiles/types";
 
@@ -62,6 +64,7 @@ describe("ProfileDetail", () => {
     expect(screen.queryByText(/São Lourenço/)).not.toBeInTheDocument();
     expect(screen.queryByText(/min\/km/)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /seguidores|seguindo/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Seguir" })).toBeInTheDocument();
   });
 
   it("renders own profile controls without a follow action", () => {

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ProfileDetail } from "@/components/profile/profile-detail";
 import { getCurrentAccountState } from "@/lib/auth/current-account";
 import { getProfileByUsername } from "@/lib/profiles/queries";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { profileUsernameSchema } from "@/lib/validations/profile";
 
 export const dynamic = "force-dynamic";
@@ -47,10 +48,21 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       : state.kind === "active" && state.onboardingCompleted
         ? "authenticated"
         : "visitor";
+  let isFollowing = false;
+  if (viewer === "authenticated" && state.kind === "active") {
+    const supabase = await createServerSupabaseClient();
+    const follow = await supabase
+      .from("user_follows")
+      .select("followed_id")
+      .eq("follower_id", state.userId)
+      .eq("followed_id", profile.id)
+      .maybeSingle();
+    isFollowing = Boolean(follow.data && !follow.error);
+  }
 
   return (
     <main className="min-h-svh bg-background px-4 py-8 sm:px-6 lg:py-12">
-      <ProfileDetail profile={profile} viewer={viewer} />
+      <ProfileDetail isFollowing={isFollowing} profile={profile} viewer={viewer} />
     </main>
   );
 }
