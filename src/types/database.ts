@@ -744,6 +744,7 @@ export type Database = {
         Args: { target_transfer_id: string }
         Returns: undefined
       }
+      current_user_can_review_groups: { Args: never; Returns: boolean }
       demote_group_admin: {
         Args: { target_group_id: string; target_user_id: string }
         Returns: undefined

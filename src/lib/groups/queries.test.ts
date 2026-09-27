@@ -6,7 +6,7 @@ const { createServerSupabaseClient } = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient }));
 
-import { getGroupBySlug, getGroupOwnerTransfer, listGroupReviewQueue, listMyGroups } from "./queries";
+import { canReviewGroups, getGroupBySlug, getGroupOwnerTransfer, listGroupReviewQueue, listMyGroups } from "./queries";
 
 const publicRow = {
   id: "51000000-0000-4000-8000-000000000001",
@@ -62,6 +62,13 @@ describe("group queries", () => {
     const result = await listGroupReviewQueue({});
     expect(result.items[0]).toMatchObject({ id: publicRow.id, status: "approved" });
     expect(result.items[0]).not.toHaveProperty("rejectionReason");
+  });
+
+  it("uses the narrow database authorization result for the review workspace", async () => {
+    rpc.mockResolvedValueOnce({ data: true, error: null });
+    await expect(canReviewGroups()).resolves.toBe(true);
+    rpc.mockResolvedValueOnce({ data: false, error: null });
+    await expect(canReviewGroups()).resolves.toBe(false);
   });
 
   it("maps SQL failures to a stable temporary error", async () => {

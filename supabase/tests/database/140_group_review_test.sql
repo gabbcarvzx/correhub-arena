@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(37);
+select plan(41);
 
 insert into auth.users(id,email) values
  ('42000000-0000-4000-8000-000000000001','review-owner@example.test'),
@@ -30,6 +30,7 @@ select public.request_group('Self Review','self-review','Must need another admin
 reset role;
 
 select has_function('public','list_group_review_queue',array['timestamp with time zone','uuid','integer'],'review queue RPC exists');
+select has_function('public','current_user_can_review_groups',array[]::text[],'review authorization RPC exists');
 select has_function('public','get_group_review',array['uuid'],'review detail RPC exists');
 select has_function('public','approve_group_request',array['uuid'],'approve RPC exists');
 select has_function('public','reject_group_request',array['uuid','text'],'reject RPC exists');
@@ -40,12 +41,14 @@ select is((select count(*) from pg_catalog.pg_proc p join pg_catalog.pg_namespac
 
 set local role authenticated;
 set local request.jwt.claims='{"sub":"42000000-0000-4000-8000-000000000005","role":"authenticated"}';
+select is(public.current_user_can_review_groups(),false,'ordinary runner cannot open review workspace');
 select throws_ok($$select public.approve_group_request((select id from public.groups where slug='approve-me'))$$,'42501',null,'ordinary runner cannot approve');
 select is((select count(*) from public.list_group_review_queue(null,null,20)),0::bigint,'ordinary runner cannot enumerate review queue');
 reset role;
 
 set local role authenticated;
 set local request.jwt.claims='{"sub":"42000000-0000-4000-8000-000000000004","role":"authenticated"}';
+select is(public.current_user_can_review_groups(),false,'moderator cannot open review workspace');
 select throws_ok($$select public.approve_group_request((select id from public.groups where slug='approve-me'))$$,'42501',null,'moderator cannot approve');
 reset role;
 
@@ -56,6 +59,7 @@ reset role;
 
 set local role authenticated;
 set local request.jwt.claims='{"sub":"42000000-0000-4000-8000-000000000002","role":"authenticated"}';
+select is(public.current_user_can_review_groups(),true,'platform admin can open review workspace');
 select is((select count(*) from public.list_group_review_queue(null,null,20)),3::bigint,'independent platform admin sees pending queue');
 select is((select status from public.get_group_review((select id from public.groups where slug='approve-me'))),'pending','review detail returns pending request');
 select lives_ok($$select public.approve_group_request((select id from public.groups where slug='approve-me'))$$,'independent platform admin approves');

@@ -35,6 +35,16 @@ on public.groups for select
 to authenticated
 using (private.current_user_can_review_groups());
 
+create or replace function public.current_user_can_review_groups()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select private.current_user_can_review_groups();
+$$;
+
 create or replace function public.list_group_review_queue(
   after_created_at timestamptz default null,
   after_id uuid default null,
@@ -225,18 +235,21 @@ end;
 $$;
 
 alter function public.list_group_review_queue(timestamptz,uuid,integer) owner to postgres;
+alter function public.current_user_can_review_groups() owner to postgres;
 alter function public.get_group_review(uuid) owner to postgres;
 alter function public.approve_group_request(uuid) owner to postgres;
 alter function public.reject_group_request(uuid,text) owner to postgres;
 alter function public.suspend_group(uuid,text) owner to postgres;
 alter function public.restore_group(uuid,text) owner to postgres;
 revoke all on function public.list_group_review_queue(timestamptz,uuid,integer) from public,anon,authenticated;
+revoke all on function public.current_user_can_review_groups() from public,anon,authenticated;
 revoke all on function public.get_group_review(uuid) from public,anon,authenticated;
 revoke all on function public.approve_group_request(uuid) from public,anon,authenticated;
 revoke all on function public.reject_group_request(uuid,text) from public,anon,authenticated;
 revoke all on function public.suspend_group(uuid,text) from public,anon,authenticated;
 revoke all on function public.restore_group(uuid,text) from public,anon,authenticated;
 grant execute on function public.list_group_review_queue(timestamptz,uuid,integer) to authenticated;
+grant execute on function public.current_user_can_review_groups() to authenticated;
 grant execute on function public.get_group_review(uuid) to authenticated;
 grant execute on function public.approve_group_request(uuid) to authenticated;
 grant execute on function public.reject_group_request(uuid,text) to authenticated;

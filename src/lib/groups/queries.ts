@@ -60,6 +60,13 @@ async function rpc(name: string, args: Record<string, unknown>, provided?: AppCl
   return (data ?? []) as Row[];
 }
 
+export async function canReviewGroups(provided?: AppClient): Promise<boolean> {
+  const supabase = await client(provided);
+  const { data, error } = await supabase.rpc("current_user_can_review_groups");
+  if (error || typeof data !== "boolean") throw new GroupQueryError("temporary_error");
+  return data;
+}
+
 export async function getGroupBySlug(slug: string, provided?: AppClient): Promise<PublicGroup | null> {
   const parsed = groupSlugSchema.safeParse(slug);
   if (!parsed.success) return null;

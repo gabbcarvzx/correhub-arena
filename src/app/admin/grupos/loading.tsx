@@ -1,0 +1,1 @@
+export default function LoadingGroupReviews() { return <main className="min-h-svh bg-background px-4 py-12"><div className="mx-auto max-w-5xl" aria-live="polite"><p className="foundation-kicker">Administração da plataforma</p><h1 className="mt-2 text-4xl font-black">Carregando solicitações…</h1></div></main>; }
