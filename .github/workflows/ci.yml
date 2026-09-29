@@ -49,7 +49,13 @@ jobs:
           status=$?
           cat "$RUNNER_TEMP/database-reset.log"
           if [ "$status" -ne 0 ]; then
-            summary="$(tail -c 7000 "$RUNNER_TEMP/database-reset.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-7000)"
+            failure_details="$(grep -Ei 'not ok|error|failed|dubious|wstat|parse errors|non-zero exit status|result: fail' "$RUNNER_TEMP/database-reset.log" | head -n 20)"
+            failure_summary="$(grep -Ei 'test summary report|wstat|failed tests|non-zero exit status|parse errors|result: fail' "$RUNNER_TEMP/database-reset.log" | tail -n 10)"
+            diagnostics="$(printf '%s\n%s\n' "$failure_details" "$failure_summary" | sed '/^[[:space:]]*$/d')"
+            if [ -z "$diagnostics" ]; then
+              diagnostics="$(tail -n 20 "$RUNNER_TEMP/database-reset.log")"
+            fi
+            summary="$(printf '%s\n' "$diagnostics" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
             echo "::error title=Database reset failed::$summary"
             {
               echo '### Database reset failure details (last 80 lines)'
@@ -68,7 +74,13 @@ jobs:
           status=$?
           cat "$RUNNER_TEMP/database-test.log"
           if [ "$status" -ne 0 ]; then
-            summary="$(tail -c 7000 "$RUNNER_TEMP/database-test.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-7000)"
+            failure_details="$(grep -Ei 'not ok|error|failed|dubious|wstat|parse errors|non-zero exit status|result: fail' "$RUNNER_TEMP/database-test.log" | head -n 20)"
+            failure_summary="$(grep -Ei 'test summary report|wstat|failed tests|non-zero exit status|parse errors|result: fail' "$RUNNER_TEMP/database-test.log" | tail -n 10)"
+            diagnostics="$(printf '%s\n%s\n' "$failure_details" "$failure_summary" | sed '/^[[:space:]]*$/d')"
+            if [ -z "$diagnostics" ]; then
+              diagnostics="$(tail -n 20 "$RUNNER_TEMP/database-test.log")"
+            fi
+            summary="$(printf '%s\n' "$diagnostics" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
             echo "::error title=Database tests failed::$summary"
             {
               echo '### Database test failure details (last 80 lines)'
@@ -86,7 +98,13 @@ jobs:
           status=$?
           cat "$RUNNER_TEMP/database-lint.log"
           if [ "$status" -ne 0 ]; then
-            summary="$(tail -c 7000 "$RUNNER_TEMP/database-lint.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-7000)"
+            failure_details="$(grep -Ei 'not ok|error|failed|dubious|wstat|parse errors|non-zero exit status|result: fail' "$RUNNER_TEMP/database-lint.log" | head -n 20)"
+            failure_summary="$(grep -Ei 'test summary report|wstat|failed tests|non-zero exit status|parse errors|result: fail' "$RUNNER_TEMP/database-lint.log" | tail -n 10)"
+            diagnostics="$(printf '%s\n%s\n' "$failure_details" "$failure_summary" | sed '/^[[:space:]]*$/d')"
+            if [ -z "$diagnostics" ]; then
+              diagnostics="$(tail -n 20 "$RUNNER_TEMP/database-lint.log")"
+            fi
+            summary="$(printf '%s\n' "$diagnostics" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
             echo "::error title=Database lint failed::$summary"
             {
               echo '### Database lint failure details (last 80 lines)'
