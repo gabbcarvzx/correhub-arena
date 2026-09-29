@@ -42,7 +42,25 @@ jobs:
       - name: Start local Supabase without printing ephemeral keys
         run: npm run db:start >/dev/null
       - run: npm run db:reset
-      - run: npm run db:test
+      # Keep pgTAP failure details visible in annotations and the job summary.
+      - name: Run npm run db:test
+        shell: bash
+        run: |
+          set +e
+          npm run db:test > "$RUNNER_TEMP/database-test.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/database-test.log"
+          if [ "$status" -ne 0 ]; then
+            summary="$(tail -n 12 "$RUNNER_TEMP/database-test.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-4000)"
+            echo "::error title=Database tests failed::$summary"
+            {
+              echo '### Database test failure details (last 50 lines)'
+              echo '```text'
+              tail -n 50 "$RUNNER_TEMP/database-test.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
       - run: npm run db:lint
       - run: npm run db:types
       - run: git diff --exit-code -- src/types/database.ts
