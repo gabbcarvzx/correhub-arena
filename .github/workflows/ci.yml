@@ -65,6 +65,27 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "$status"
+      - name: Explain the pending group review queue query
+        shell: bash
+        run: |
+          set +e
+          query="EXPLAIN (ANALYZE, BUFFERS) SELECT g.id, g.created_at FROM public.groups AS g WHERE g.status = 'pending' ORDER BY g.created_at, g.id LIMIT 50;"
+          npm exec --no -- supabase db query --local "$query" > "$RUNNER_TEMP/group-queue-explain.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/group-queue-explain.log"
+          if [ "$status" -ne 0 ]; then
+            summary="$(tail -n 20 "$RUNNER_TEMP/group-queue-explain.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
+            echo "::error title=Group review queue EXPLAIN failed::$summary"
+            exit "$status"
+          fi
+          summary="$(tail -n 20 "$RUNNER_TEMP/group-queue-explain.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
+          echo "::notice title=Group review queue EXPLAIN::$summary"
+          {
+            echo '### Pending group review queue EXPLAIN (ANALYZE, BUFFERS)'
+            echo '```text'
+            cat "$RUNNER_TEMP/group-queue-explain.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       # Keep pgTAP failure details visible in annotations and the job summary.
       - name: Run npm run db:test
         shell: bash
