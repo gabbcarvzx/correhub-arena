@@ -41,7 +41,24 @@ jobs:
       - run: docker info
       - name: Start local Supabase without printing ephemeral keys
         run: npm run db:start >/dev/null
-      - run: npm run db:reset
+      - name: Run npm run db:reset
+        shell: bash
+        run: |
+          set +e
+          npm run db:reset > "$RUNNER_TEMP/database-reset.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/database-reset.log"
+          if [ "$status" -ne 0 ]; then
+            summary="$(tail -n 80 "$RUNNER_TEMP/database-reset.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-7000)"
+            echo "::error title=Database reset failed::$summary"
+            {
+              echo '### Database reset failure details (last 80 lines)'
+              echo '```text'
+              tail -n 80 "$RUNNER_TEMP/database-reset.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
       # Keep pgTAP failure details visible in annotations and the job summary.
       - name: Run npm run db:test
         shell: bash
@@ -51,17 +68,34 @@ jobs:
           status=$?
           cat "$RUNNER_TEMP/database-test.log"
           if [ "$status" -ne 0 ]; then
-            summary="$(tail -n 12 "$RUNNER_TEMP/database-test.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-4000)"
+            summary="$(tail -n 80 "$RUNNER_TEMP/database-test.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-7000)"
             echo "::error title=Database tests failed::$summary"
             {
-              echo '### Database test failure details (last 50 lines)'
+              echo '### Database test failure details (last 80 lines)'
               echo '```text'
-              tail -n 50 "$RUNNER_TEMP/database-test.log"
+              tail -n 80 "$RUNNER_TEMP/database-test.log"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "$status"
-      - run: npm run db:lint
+      - name: Run npm run db:lint
+        shell: bash
+        run: |
+          set +e
+          npm run db:lint > "$RUNNER_TEMP/database-lint.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/database-lint.log"
+          if [ "$status" -ne 0 ]; then
+            summary="$(tail -n 80 "$RUNNER_TEMP/database-lint.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-7000)"
+            echo "::error title=Database lint failed::$summary"
+            {
+              echo '### Database lint failure details (last 80 lines)'
+              echo '```text'
+              tail -n 80 "$RUNNER_TEMP/database-lint.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
       - run: npm run db:types
       - run: git diff --exit-code -- src/types/database.ts
       - run: npm run test:e2e:install

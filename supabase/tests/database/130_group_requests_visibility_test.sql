@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(81);
+select plan(87);
 
 insert into auth.users (id, email) values
   ('41000000-0000-4000-8000-000000000001', 'group-owner@example.test'),
@@ -18,7 +18,7 @@ where id = '41000000-0000-4000-8000-000000000001';
 update public.profiles set
   username = 'group_reviewer_410', full_name = 'Group Reviewer',
   city_id = '10000000-0000-4000-8000-000000000001',
-  running_level = 'intermediate', preferred_distance = '5k_to_10k', onboarding_completed = true
+  running_level = 'intermediate', preferred_distance = '5k_to_10k', onboarding_completed = false
 where id = '41000000-0000-4000-8000-000000000002';
 update public.profiles set
   username = 'group_rate_410', full_name = 'Group Rate',
@@ -40,6 +40,11 @@ values ('41000000-0000-4000-8000-000000000099', 'Inactive Fixture City', 'BR', '
 
 select has_function('private', 'current_account_is_group_ready', array[]::text[], 'group readiness helper exists');
 select has_function('private', 'group_slug_is_reserved', array['text'], 'group route reservation helper exists');
+select isnt(has_function_privilege('authenticated', 'private.group_slug_is_reserved(text)', 'EXECUTE'), true,
+  'route reservation helper is not directly executable by clients');
+select has_function('private', 'consume_group_request_rate_limit', array['uuid'], 'atomic group request rate-limit helper exists');
+select isnt(has_function_privilege('authenticated', 'private.consume_group_request_rate_limit(uuid)', 'EXECUTE'), true,
+  'rate-limit helper cannot be called directly by clients');
 select has_function('public', 'request_group', array['text','text','text','uuid','text','text'], 'group request RPC exists');
 select has_function('public', 'update_group_profile', array['uuid','text','text','text','uuid','text','text'], 'group profile update RPC exists');
 select has_function('public', 'resubmit_group', array['uuid'], 'group resubmit RPC exists');
@@ -139,8 +144,16 @@ select throws_ok(
   '22023', 'group type is invalid', 'request rejects unknown group types'
 );
 select throws_ok(
+  $$select public.request_group('Missing type', 'missing-type-run', 'Description', '10000000-0000-4000-8000-000000000001', null, 'open')$$,
+  '22023', 'group type is invalid', 'request rejects a missing group type'
+);
+select throws_ok(
   $$select public.request_group('Bad policy', 'bad-policy-run', 'Description', '10000000-0000-4000-8000-000000000001', 'community', 'automatic')$$,
   '22023', 'group join policy is invalid', 'request rejects unknown join policies'
+);
+select throws_ok(
+  $$select public.request_group('Missing policy', 'missing-policy-run', 'Description', '10000000-0000-4000-8000-000000000001', 'community', null)$$,
+  '22023', 'group join policy is invalid', 'request rejects a missing join policy'
 );
 select throws_ok(
   $$select public.request_group('Bad city', 'inactive-city-run', 'Description', '41000000-0000-4000-8000-000000000099', 'community', 'open')$$,
@@ -225,6 +238,9 @@ select is((select count(id) from public.groups where slug='revised-request' and 
 select is((select rejection_reason from public.list_my_groups(null, null, 20) where slug='revised-request'),
   null::text, 'resubmission clears the private rejection reason');
 reset role;
+select is((select consumed from private.rate_limit_buckets
+  where user_id='41000000-0000-4000-8000-000000000001' and action='group_request'),
+  5, 'resubmission consumes one of the daily group request slots');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"41000000-0000-4000-8000-000000000006","role":"authenticated"}';
