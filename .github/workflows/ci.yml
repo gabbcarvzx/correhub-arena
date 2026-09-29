@@ -41,9 +41,100 @@ jobs:
       - run: docker info
       - name: Start local Supabase without printing ephemeral keys
         run: npm run db:start >/dev/null
-      - run: npm run db:reset
-      - run: npm run db:test
-      - run: npm run db:lint
+      - name: Run npm run db:reset
+        shell: bash
+        run: |
+          set +e
+          npm run db:reset > "$RUNNER_TEMP/database-reset.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/database-reset.log"
+          if [ "$status" -ne 0 ]; then
+            failure_details="$(grep -Ei 'not ok|error|failed|dubious|wstat|parse errors|non-zero exit status|result: fail' "$RUNNER_TEMP/database-reset.log" | head -n 20)"
+            failure_summary="$(grep -Ei 'test summary report|wstat|failed tests|non-zero exit status|parse errors|result: fail' "$RUNNER_TEMP/database-reset.log" | tail -n 10)"
+            diagnostics="$(printf '%s\n%s\n' "$failure_details" "$failure_summary" | sed '/^[[:space:]]*$/d')"
+            if [ -z "$diagnostics" ]; then
+              diagnostics="$(tail -n 20 "$RUNNER_TEMP/database-reset.log")"
+            fi
+            summary="$(printf '%s\n' "$diagnostics" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
+            echo "::error title=Database reset failed::$summary"
+            {
+              echo '### Database reset failure details (last 80 lines)'
+              echo '```text'
+              tail -n 80 "$RUNNER_TEMP/database-reset.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
+      - name: Explain the pending group review queue query
+        shell: bash
+        run: |
+          set +e
+          query="EXPLAIN (ANALYZE, BUFFERS) SELECT g.id, g.created_at FROM public.groups AS g WHERE g.status = 'pending' ORDER BY g.created_at, g.id LIMIT 50;"
+          npm exec --no -- supabase db query --local "$query" > "$RUNNER_TEMP/group-queue-explain.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/group-queue-explain.log"
+          if [ "$status" -ne 0 ]; then
+            summary="$(tail -n 20 "$RUNNER_TEMP/group-queue-explain.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
+            echo "::error title=Group review queue EXPLAIN failed::$summary"
+            exit "$status"
+          fi
+          summary="$(tail -n 20 "$RUNNER_TEMP/group-queue-explain.log" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
+          echo "::notice title=Group review queue EXPLAIN::$summary"
+          {
+            echo '### Pending group review queue EXPLAIN (ANALYZE, BUFFERS)'
+            echo '```text'
+            cat "$RUNNER_TEMP/group-queue-explain.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      # Keep pgTAP failure details visible in annotations and the job summary.
+      - name: Run npm run db:test
+        shell: bash
+        run: |
+          set +e
+          npm run db:test > "$RUNNER_TEMP/database-test.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/database-test.log"
+          if [ "$status" -ne 0 ]; then
+            failure_details="$(grep -Ei 'not ok|error|failed|dubious|wstat|parse errors|non-zero exit status|result: fail' "$RUNNER_TEMP/database-test.log" | head -n 20)"
+            failure_summary="$(grep -Ei 'test summary report|wstat|failed tests|non-zero exit status|parse errors|result: fail' "$RUNNER_TEMP/database-test.log" | tail -n 10)"
+            diagnostics="$(printf '%s\n%s\n' "$failure_details" "$failure_summary" | sed '/^[[:space:]]*$/d')"
+            if [ -z "$diagnostics" ]; then
+              diagnostics="$(tail -n 20 "$RUNNER_TEMP/database-test.log")"
+            fi
+            summary="$(printf '%s\n' "$diagnostics" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
+            echo "::error title=Database tests failed::$summary"
+            {
+              echo '### Database test failure details (last 80 lines)'
+              echo '```text'
+              tail -n 80 "$RUNNER_TEMP/database-test.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
+      - name: Run npm run db:lint
+        shell: bash
+        run: |
+          set +e
+          npm run db:lint > "$RUNNER_TEMP/database-lint.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/database-lint.log"
+          if [ "$status" -ne 0 ]; then
+            failure_details="$(grep -Ei 'not ok|error|failed|dubious|wstat|parse errors|non-zero exit status|result: fail' "$RUNNER_TEMP/database-lint.log" | head -n 20)"
+            failure_summary="$(grep -Ei 'test summary report|wstat|failed tests|non-zero exit status|parse errors|result: fail' "$RUNNER_TEMP/database-lint.log" | tail -n 10)"
+            diagnostics="$(printf '%s\n%s\n' "$failure_details" "$failure_summary" | sed '/^[[:space:]]*$/d')"
+            if [ -z "$diagnostics" ]; then
+              diagnostics="$(tail -n 20 "$RUNNER_TEMP/database-lint.log")"
+            fi
+            summary="$(printf '%s\n' "$diagnostics" | tr '\n' ' ' | sed 's/%/%25/g' | cut -c1-3500)"
+            echo "::error title=Database lint failed::$summary"
+            {
+              echo '### Database lint failure details (last 80 lines)'
+              echo '```text'
+              tail -n 80 "$RUNNER_TEMP/database-lint.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
       - run: npm run db:types
       - run: git diff --exit-code -- src/types/database.ts
       - run: npm run test:e2e:install

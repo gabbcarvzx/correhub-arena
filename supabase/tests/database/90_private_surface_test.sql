@@ -1,12 +1,13 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(15);
 
 select is((select count(*) from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid=c.relnamespace
  where n.nspname in ('public','private') and c.relkind='r' and c.relrowsecurity),26::bigint,'all application tables have RLS enabled');
-select is((select count(*) from pg_catalog.pg_policies where schemaname in ('public','private')),8::bigint,'only five base and three Gate 3 social policies exist');
+select is((select count(*) from pg_catalog.pg_policies where schemaname in ('public','private')),13::bigint,'only five base, three Gate 3 social, and five Gate 4 group policies exist');
 select is((select count(*) from pg_catalog.pg_policies where schemaname='public' and tablename='user_follows'),3::bigint,'user_follows has exactly the three approved Gate 3 policies');
-select is((select count(*) from pg_catalog.pg_policies where tablename not in ('cities','app_settings','profiles','user_follows')),0::bigint,'remaining future domain tables have zero policies');
+select is((select count(*) from pg_catalog.pg_policies where schemaname='public' and tablename='groups'),5::bigint,'groups has exactly the five approved Gate 4 visibility policies');
+select is((select count(*) from pg_catalog.pg_policies where tablename not in ('cities','app_settings','profiles','user_follows','groups')),0::bigint,'remaining future domain tables have zero policies');
 select is((select count(*) from information_schema.role_table_grants where table_schema='private' and grantee='anon'),0::bigint,'anon has no private table grants');
 select is((select count(*) from information_schema.role_table_grants where table_schema='private' and grantee='authenticated'),0::bigint,'authenticated has no private table grants');
 select ok((select reloptions @> array['security_invoker=true'] from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname='profile_directory'),'profile directory is security invoker');
