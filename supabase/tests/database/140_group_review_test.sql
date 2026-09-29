@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(97);
+select plan(98);
 
 insert into auth.users (id, email) values
   ('42000000-0000-4000-8000-000000000001', 'review-owner@example.test'),
@@ -66,6 +66,10 @@ select lives_ok($$select public.request_group('Admin Own Group', 'admin-own-grou
   'platform admin can create a request as a runner');
 reset role;
 
+select ok(not has_table_privilege('authenticated', 'private.admin_audit_logs', 'INSERT')
+    and not has_table_privilege('authenticated', 'private.admin_audit_logs', 'UPDATE')
+    and not has_table_privilege('authenticated', 'private.admin_audit_logs', 'DELETE'),
+  'API roles cannot insert, update, or delete audit rows');
 select has_function('public', 'list_group_review_queue', array['timestamptz','uuid','integer'], 'admin review queue RPC exists');
 select has_function('public', 'get_group_review', array['uuid'], 'admin review detail RPC exists');
 select has_function('public', 'approve_group_request', array['uuid'], 'approval RPC exists');
@@ -258,7 +262,8 @@ select is((select count(*) from public.group_members gm join public.groups g on 
   1::bigint, 'rejection keeps the designated owner pending');
 select is((select count(*) from private.admin_audit_logs a join public.groups g on g.id=a.target_id
   where g.slug='rejection-example' and a.actor_user_id='42000000-0000-4000-8000-000000000002'
-    and a.action='group.request_rejected' and a.metadata='{"previous_status":"pending","new_status":"rejected"}'::jsonb),
+    and a.action='group.request_rejected'
+    and a.metadata='{"previous_status":"pending","new_status":"rejected","reason":"Please clarify the weekly schedule."}'::jsonb),
   1::bigint, 'rejection audit records minimal state and no copied content');
 select is((select count(*) from public.notifications n join public.groups g on g.id=n.target_id
   where g.slug='rejection-example' and n.recipient_user_id='42000000-0000-4000-8000-000000000001'
